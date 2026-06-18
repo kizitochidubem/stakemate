@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #030a1a;
+  --bg-secondary: #071428;
+  --bg-tertiary: #0d1f3c;
+  --bg-elevated: #132a50;
+  --accent: #4da2ff;
+  --accent-dim: #2a6cc4;
+  --accent-glow: rgba(77, 162, 255, 0.14);
+  --accent-bright: #82c0ff;
+  --danger: #ef4444;
+  --danger-dim: #991b1b;
+  --success: #22c55e;
+  --text-primary: #e8f0fe;
+  --text-secondary: #8ba8c8;
+  --text-muted: #3d5a80;
+  --border: #112240;
+  --border-hover: #1e4080;
+  --board-dark: #071428;
+  --board-light: #0d2244;
+
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: 'Manrope', 'Geist', -apple-system, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+}
+
+@theme inline {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection { background: var(--accent); color: var(--bg-primary); }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* Animations */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes loadingBar { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+
+.animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+.animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-pulse { animation: pulse 2s ease-in-out infinite; }
+.animate-shake { animation: shake 0.1s ease; }
+
+@keyframes accentRipple {
+  0% { box-shadow: 0 0 0 0 rgba(77, 162, 255, 0.5); }
+  100% { box-shadow: 0 0 0 7px rgba(77, 162, 255, 0); }
+}
+.animate-gold-pulse { animation: accentRipple 1.3s ease-out infinite; }
+
+.loading-bar {
+  position: relative; overflow: hidden; height: 2px; background: var(--bg-tertiary);
+}
+.loading-bar::after {
+  content: ''; position: absolute; inset: 0; background: var(--accent);
+  animation: loadingBar 1.5s ease-in-out infinite;
+}
+
+.board-vignette { box-shadow: inset 0 0 60px rgba(0,0,0,0.5); pointer-events: none; }
+
+/* Number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+/* Bracket grid stacks on mobile */
+@media (max-width: 768px) {
+  .bracket-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Pending claims row: stack the button under the description on narrow screens
+   so the button doesn't squeeze the agent name into ellipsis hell. */
+@media (max-width: 440px) {
+  .pending-claim-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .pending-claim-button {
+    width: 100%;
+  }
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(3, 10, 26, 0.92); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+.modal-content {
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 8px; max-width: 440px; width: calc(100% - 32px);
+  max-height: calc(100vh - 64px); overflow-y: auto;
+}
+
+/* Wallet overrides */
+.wallet-adapter-modal-wrapper { background: rgba(3, 10, 26, 0.95) !important; }
+.wallet-adapter-modal-container { background: var(--bg-secondary) !important; border: 1px solid var(--border) !important; border-radius: 8px !important; }
+.wallet-adapter-modal-title { color: var(--text-primary) !important; }
+.wallet-adapter-modal-list .wallet-adapter-button { background: var(--bg-tertiary) !important; border-radius: 6px !important; color: var(--text-primary) !important; }
+.wallet-adapter-modal-list .wallet-adapter-button:hover { background: var(--bg-elevated) !important; }
+.wallet-adapter-button { background: var(--accent) !important; color: var(--bg-primary) !important; border-radius: 6px !important; font-weight: 600 !important; }
