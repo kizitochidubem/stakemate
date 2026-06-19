@@ -107,9 +107,8 @@ export async function recordUserWager(
     throw new Error("Invalid wallet address");
   }
 
-  await trackUserVisit(wallet);
+  const user = await trackUserVisit(wallet);
 
-  const user = (await kv.get<StakemateUser>(USER_KEY(wallet)))!;
   const updated: StakemateUser = {
     ...user,
     totalWageredSui:

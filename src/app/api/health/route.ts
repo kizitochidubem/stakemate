@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { kv, storageMode } from "@/lib/server/storage";
-import { getGlobalMatchCount } from "@/lib/server/agent-stats";
+import { checkUpstashReachable, storageMode } from "@/lib/server/storage";
 
 export const runtime = "nodejs";
 
@@ -9,21 +8,8 @@ export const runtime = "nodejs";
  */
 export async function GET() {
   const checks: Record<string, boolean> = {
-    kv: false,
+    kv: await checkUpstashReachable(),
   };
-
-  try {
-    await getGlobalMatchCount();
-    checks.kv = true;
-  } catch {
-    try {
-      await kv.set("__health_ping__", 1);
-      await kv.get("__health_ping__");
-      checks.kv = true;
-    } catch {
-      checks.kv = storageMode === "memory";
-    }
-  }
 
   const ok = checks.kv;
 

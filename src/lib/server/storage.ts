@@ -24,8 +24,13 @@ interface KV {
   scanUserProfileKeys(): Promise<string[]>;
 }
 
-const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
-const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+/** Trim defensively · a stray quote/newline pasted into the Vercel env var UI breaks fetch's URL parser. */
+function cleanEnv(value: string | undefined): string | undefined {
+  return value?.trim().replace(/^["']|["']$/g, "") || undefined;
+}
+
+const UPSTASH_URL = cleanEnv(process.env.UPSTASH_REDIS_REST_URL);
+const UPSTASH_TOKEN = cleanEnv(process.env.UPSTASH_REDIS_REST_TOKEN);
 
 const memStore = new Map<string, unknown>();
 const memHash = new Map<string, Map<string, string>>();
@@ -90,10 +95,20 @@ async function upstashFetch(command: (string | number)[]): Promise<unknown> {
   return data.result;
 }
 
+/** Redis is best-effort: a degraded/unreachable Upstash DB must not crash callers. */
+async function safeUpstashFetch(command: (string | number)[]): Promise<unknown> {
+  try {
+    return await upstashFetch(command);
+  } catch (err) {
+    console.error("[storage:upstash]", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
 function upstashKV(): KV {
   return {
     async get<T>(key: string): Promise<T | null> {
-      const result = await upstashFetch(["GET", key]);
+      const result = await safeUpstashFetch(["GET", key]);
       if (result === null || result === undefined) return null;
       try {
         return typeof result === "string" ? (JSON.parse(result) as T) : (result as T);
@@ -106,30 +121,30 @@ function upstashKV(): KV {
         typeof value === "string" ? value : JSON.stringify(value);
       const cmd: (string | number)[] = ["SET", key, serialized];
       if (ttlSeconds) cmd.push("EX", ttlSeconds);
-      await upstashFetch(cmd);
+      await safeUpstashFetch(cmd);
     },
     async hset(key, field, value) {
-      await upstashFetch(["HSET", key, field, value]);
+      await safeUpstashFetch(["HSET", key, field, value]);
     },
     async hget(key, field) {
-      const v = await upstashFetch(["HGET", key, field]);
+      const v = await safeUpstashFetch(["HGET", key, field]);
       return v === null || v === undefined ? null : String(v);
     },
     async hgetall(key) {
-      const v = (await upstashFetch(["HGETALL", key])) as
+      const v = (await safeUpstashFetch(["HGETALL", key])) as
         | Record<string, string>
         | null;
       return v ?? {};
     },
     async hdel(key, field) {
-      await upstashFetch(["HDEL", key, field]);
+      await safeUpstashFetch(["HDEL", key, field]);
     },
     async hlen(key) {
-      const v = (await upstashFetch(["HLEN", key])) as number;
+      const v = (await safeUpstashFetch(["HLEN", key])) as number;
       return v ?? 0;
     },
     async scanUserProfileKeys() {
-      const raw = (await upstashFetch(["KEYS", "user:*"])) as string[] | null;
+      const raw = (await safeUpstashFetch(["KEYS", "user:*"])) as string[] | null;
       if (!raw?.length) return [];
       return raw.filter((k) => !k.includes(":wagers"));
     },
@@ -143,3 +158,14 @@ export const kv: KV = isUpstashConfigured ? upstashKV() : memKV();
 export const storageMode: "upstash" | "memory" = isUpstashConfigured
   ? "upstash"
   : "memory";
+
+/** Real connectivity probe for /api/health · kv.get/set never throw, so they can't tell us this. */
+export async function checkUpstashReachable(): Promise<boolean> {
+  if (!isUpstashConfigured) return true;
+  try {
+    await upstashFetch(["PING"]);
+    return true;
+  } catch {
+    return false;
+  }
+}
