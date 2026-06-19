@@ -20,8 +20,8 @@
   --board-dark: #071428;
   --board-light: #0d2244;
 
-  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: 'Manrope', 'Geist', -apple-system, system-ui, sans-serif;
+  --font-sans: 'Nunito Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: 'Nunito Sans', -apple-system, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 

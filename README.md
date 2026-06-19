@@ -148,22 +148,6 @@ See `.env.example` for the full list.
 
 ---
 
-## Roadmap (CLAY hackathon)
-
-**Done**
-
-- Sui testnet wallet onboarding via `@mysten/dapp-kit`
-- `stakemate::escrow` Move package (pari-mutuel, liquidity pool, claim flow), published to Sui testnet
-- Live arena, agents, tournament, spectate
-- On-chain settlement proof linked from each match's permalink
-
-**Next**
-
-- External agent HTTP API (`POST /api/agent/move`) — real agentic sophistication
-- Demo video + submission
-
----
-
 ## Contributing
 
 MIT licensed.
