@@ -142,6 +142,7 @@ function ArenaContent() {
   );
   const gameRef = useRef(game);
   const playingRef = useRef(false);
+  const nextMoveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const matchIdRef = useRef(freshArenaMatchId());
   const activeWagerRef = useRef(activeWager);
   const lastEvalRef = useRef(0);
@@ -178,6 +179,14 @@ function ArenaContent() {
   useEffect(() => {
     playingRef.current = isPlaying;
   }, [isPlaying]);
+
+  // Hard-cancel any pending poll on unmount · playingRef alone can't reach
+  // an already-scheduled setTimeout from a torn-down component instance.
+  useEffect(() => {
+    return () => {
+      if (nextMoveTimeoutRef.current) clearTimeout(nextMoveTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     activeWagerRef.current = activeWager;
@@ -410,7 +419,7 @@ function ArenaContent() {
       }
 
       // Schedule next move
-      setTimeout(() => void fetchNextMove(), 250 + Math.random() * 150);
+      nextMoveTimeoutRef.current = setTimeout(() => void fetchNextMove(), 250 + Math.random() * 150);
     } catch (err) {
       console.error("Move failed:", err);
       push("Move failed · server error", "error");
@@ -429,6 +438,10 @@ function ArenaContent() {
 
   const startMatch = useCallback(async () => {
     if (startingMatch) return;
+    if (!activeWager) {
+      push("Place a wager on a side before starting the match", "error");
+      return;
+    }
     setStartingMatch(true);
     clearSettlement();
     const newGame = new Chess();
@@ -458,7 +471,7 @@ function ArenaContent() {
       setIsPlaying(true);
       playingRef.current = true;
       setPool((p) => Math.round((p + (activeWager?.amount ?? 0)) * 10) / 10);
-      setTimeout(() => void fetchNextMove(), 200);
+      nextMoveTimeoutRef.current = setTimeout(() => void fetchNextMove(), 200);
     } catch (err) {
       console.error("Start match failed:", err);
       push("Could not start match", "error");
@@ -470,7 +483,7 @@ function ArenaContent() {
     blackAgent.id,
     fetchNextMove,
     clearSettlement,
-    activeWager?.amount,
+    activeWager,
     push,
     startingMatch,
     account,
@@ -488,12 +501,14 @@ function ArenaContent() {
     setIsPlaying(false);
     setPaused(false);
     playingRef.current = false;
+    if (nextMoveTimeoutRef.current) clearTimeout(nextMoveTimeoutRef.current);
   }, [activeWager, push]);
 
   /** Freeze the broadcast: stop polling but keep all state. */
   const pauseMatch = useCallback(() => {
     if (!isPlaying || paused) return;
     playingRef.current = false;
+    if (nextMoveTimeoutRef.current) clearTimeout(nextMoveTimeoutRef.current);
     setPaused(true);
   }, [isPlaying, paused]);
 
@@ -506,7 +521,7 @@ function ArenaContent() {
     }
     playingRef.current = true;
     setPaused(false);
-    setTimeout(() => void fetchNextMove(), 150);
+    nextMoveTimeoutRef.current = setTimeout(() => void fetchNextMove(), 150);
   }, [isPlaying, paused, matchStartedAt, elapsed, fetchNextMove]);
 
   const selectAgent = (agent: Agent) => {
@@ -908,7 +923,8 @@ function ArenaContent() {
                   <button
                     type="button"
                     onClick={startMatch}
-                    disabled={startingMatch}
+                    disabled={startingMatch || !activeWager}
+                    title={!activeWager ? "Place a wager on a side first" : undefined}
                     style={{
                       width: "100%",
                       padding: "14px 0",
@@ -921,8 +937,8 @@ function ArenaContent() {
                       color: "var(--bg-primary)",
                       border: "none",
                       borderRadius: 8,
-                      cursor: startingMatch ? "not-allowed" : "pointer",
-                      opacity: startingMatch ? 0.7 : 1,
+                      cursor: startingMatch || !activeWager ? "not-allowed" : "pointer",
+                      opacity: startingMatch || !activeWager ? 0.7 : 1,
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -930,7 +946,13 @@ function ArenaContent() {
                     }}
                   >
                     {startingMatch && <Spinner size={16} color="var(--bg-primary)" />}
-                    {startingMatch ? "Starting..." : result ? "Rematch" : "Start Match"}
+                    {startingMatch
+                      ? "Starting..."
+                      : !activeWager
+                        ? "Place a Wager to Start"
+                        : result
+                          ? "Rematch"
+                          : "Start Match"}
                   </button>
                 ) : (
                   <div style={{ display: "flex", gap: 8 }}>
