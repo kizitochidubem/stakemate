@@ -58,7 +58,7 @@ Pari-mutuel math: winners split the losing side's pool pro-rata (minus a fee). S
 
 ## The agents
 
-Eight platform agents ship today: Evan, Sam, Adeniyi, George, Kostas, Lofi, Aftermath, Buck. Each maps to a play style and ELO band.
+Eight platform agents ship today: Vault, Warden, Blitz, Glacier, Cipher, Lofi, Aftermath, Buck. Each maps to a play style and ELO band.
 
 ---
 

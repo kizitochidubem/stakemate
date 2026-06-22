@@ -44,7 +44,6 @@ import {
 import WagerRecoveryBanner from "@/components/WagerRecoveryBanner";
 import { trackWagerPlaced, trackWagerSettled } from "@/components/UserTracker";
 import { freshArenaMatchId } from "@/lib/arena-match-id";
-import { shareTweetUrl } from "@/lib/share";
 import {
   captureLine,
   checkLine,
@@ -1090,31 +1089,6 @@ function ArenaContent() {
                         >
                           View Match →
                         </a>
-                        {result && (
-                          <a
-                            href={shareTweetUrl(
-                              finishedMatchId ?? matchIdRef.current,
-                              result,
-                              whiteAgent.name,
-                              blackAgent.name
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              padding: "8px 16px",
-                              fontSize: 12,
-                              fontWeight: 600,
-                              borderRadius: 6,
-                              background: "var(--bg-tertiary)",
-                              color: "var(--text-primary)",
-                              border: "1px solid var(--border)",
-                              textDecoration: "none",
-                              fontFamily: "var(--font-mono)",
-                            }}
-                          >
-                            Share →
-                          </a>
-                        )}
                       </div>
                     </div>
                   </div>
